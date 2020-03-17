@@ -1,79 +1,212 @@
+#
+# 画面設計のスキーマ
+#
+
+# 画面項目
 interface PageItem {
-    no: Int
-    name: String
-    label: String
-    defaultValue: 
+  id: ID!
+  # 表示項目名称
+  name: String!
+  # 表示項目ラベル
+  label: String
+  defaultValue: Any
 }
 
 enum FormType {
-    TEXTBOX
-    TEXTAREA
-    RADIO_BUTTON
-    CHECKBOX
-    PULLDOWN
+  TEXTBOX
+  TEXTAREA
+  RADIO_BUTTON
+  CHECKBOX
+  PULLDOWN
 }
 
+# 入力型(バリデーションのため)
 interface ValueType {
-
 }
 
-type IntType {
-    upperBound: Int
-    lowerBound: Int
+# 整数型
+type IntType implements ValueType {
+  # 最大値
+  upperBound: Int
+  # 最小値
+  lowerBound: Int
 }
 
-type StringType {
-    regexp: String
-    length: Int
+# 文字列型
+type StringType implements ValueType {
+  # 文字パターン(正規表現)
+  regexp: String
+  # 最大長
+  maxLength: Int
+  # 最小長
+  minLength: Int
+  # 固定長
+  length: Int
 }
 
-type CollectionType {
-
+# コレクション型
+type CollectionType implements ValueType {
+  # 最大要素数
+  minCount: Int
+  # 最小要素数
+  maxCount: Int
+  # 固定要素数
+  count: Int
+  # 子要素の型
+  childrenType: ValueType
 }
 
-interface FormItem implements PageSingleItem {
-    no: Int
-    name: String
-    label: String
-    formType: FormType
+# オブジェクト型
+type ObjectType implements ValueType {
+  # プロパティ
+  properties: [ ObjectProperty ]
+  # 必須プロパティ名
+  required: [ String ]
 }
 
-interface PageSingleItem implements PageItem {
-    no: Int
-    name: String
-    label: String
-    events: [ Event ]
+# オブジェクト型のプロパティ
+type ObjectProperty {
+  # プロパティ名
+  name: String
+  # プロパティ型
+  type: ValueType
 }
 
-interface PageItemGroup implements PageItem {
-    no: Int
-    name: String
-    label: String
-    children: [ PageItem ]
-    type: CollectionType
+# 混合型
+type UnionType implements ValueType {
+  types: [ UnionTypeElement ]
 }
 
+type UnionTypeElement {
+  # 型選択条件
+  condition: String
+  # 型
+  type: ValueType
+}
+
+# 値ドメイン
+type ValueDomain {
+  name: String
+  type: ValueType
+}
+
+# 表示項目
+type ReadOnlyItem implements PageItem {
+  id: ID!
+  # 項目名称
+  name: String!
+  # 表示ラベル
+  label: String
+  # 初期値
+  defaultValue: Any
+  # 発生イベント
+  events: [ Event ]
+  # 入力マッピング仕様
+  mappingInbound: MappingSpec
+}
+
+# フォーム項目
+type FormItem implements PageItem {
+  id: ID!
+  # 項目名称
+  name: String!
+  # 表示ラベル
+  label: String
+  # 初期値
+  defaultValue: Any
+  # 発生イベント
+  events: [ Event ]
+  formType: FormType
+  domain: ValueDomain
+  # 入力マッピング仕様
+  mappingInbound: MappingSpec
+  # 出力マッピング仕様
+  mappingOutbound: MappingSpec
+}
+
+# 画面項目の繰り返し
+type PageItemGroup implements PageItem {
+  id: ID!
+  # 項目名称
+  name: String
+  # 表示ラベル
+  label: String
+  defaultValue: Any
+  # 繰り替えす画面項目
+  children: [ PageItem ]
+  # 繰り返しの型
+  type: CollectionType
+}
+
+# データソースとのマッピング仕様
+type MappingSpec {
+  # 編集仕様
+  format: String
+  # データソースの項目
+  properties: [ MappingProperty ]
+}
+
+# データソースの属性
+type MappingProperty {
+  # コレクション名(RDBの場合、テーブル名)
+  collectionName: String
+  # 属性名(RDBの場合、カラム名)
+  propertyName: String
+}
+
+# イベント
 interface Event {
-    name: String
-    arguments: [ Argument ]
+  # イベント名称
+  name: String
+  # イベント引数
+  arguments: [ Argument ]
 }
 
 # 画面遷移イベント
 type PageTransitionEvent implements Event {
-    name: String
-    arguments: [ Argument ]
-    to: Page
+  # イベント名称
+  name: String
+  # イベント引数
+  arguments: [ Argument ]
+  # 遷移先ページ
+  to: Page
 }
-scalar Date
 
-type DocumentMeta {
+# イベントハンドラ
+type EventHandler {
+  # イベントハンドラ名称
+  name: String!
+  # 処理概要
+  summary: String
+  # トリガーイベント
+  trigger: Event
+  # イベント処理フロー
+  flow: [ EventProcessStep ]
+}
+
+# イベント処理フローのステップ
+type EventProcessStep {
+  id: ID!
+  # 詳細
+  description: String
+  # 子フロー
+  subFlow: [ EventProcessStep ]
+  # 代替フロー
+  altFlow: [ EventProcessStep ]
 }
 
 # 画面
 type Page {
-    name: String
-    purpose: String     # 目的
-    items: [ PageItem ] # 画面表示項目
-    events: [ Event ]   # 発生イベント
-}
+  name: String
+  # 目的
+  purpose: String
 
+  # 画面キャプチャ
+  screenshot: String
+
+  # 画面表示項目
+  items: [ PageItem ]
+
+  # 発生イベント
+  events: [ Event ]
+}
