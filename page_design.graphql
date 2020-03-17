@@ -1,0 +1,79 @@
+interface PageItem {
+    no: Int
+    name: String
+    label: String
+    defaultValue: 
+}
+
+enum FormType {
+    TEXTBOX
+    TEXTAREA
+    RADIO_BUTTON
+    CHECKBOX
+    PULLDOWN
+}
+
+interface ValueType {
+
+}
+
+type IntType {
+    upperBound: Int
+    lowerBound: Int
+}
+
+type StringType {
+    regexp: String
+    length: Int
+}
+
+type CollectionType {
+
+}
+
+interface FormItem implements PageSingleItem {
+    no: Int
+    name: String
+    label: String
+    formType: FormType
+}
+
+interface PageSingleItem implements PageItem {
+    no: Int
+    name: String
+    label: String
+    events: [ Event ]
+}
+
+interface PageItemGroup implements PageItem {
+    no: Int
+    name: String
+    label: String
+    children: [ PageItem ]
+    type: CollectionType
+}
+
+interface Event {
+    name: String
+    arguments: [ Argument ]
+}
+
+# 画面遷移イベント
+type PageTransitionEvent implements Event {
+    name: String
+    arguments: [ Argument ]
+    to: Page
+}
+scalar Date
+
+type DocumentMeta {
+}
+
+# 画面
+type Page {
+    name: String
+    purpose: String     # 目的
+    items: [ PageItem ] # 画面表示項目
+    events: [ Event ]   # 発生イベント
+}
+
